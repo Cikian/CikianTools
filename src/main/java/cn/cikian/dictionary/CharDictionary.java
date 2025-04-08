@@ -7,14 +7,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 
-
-
 /**
- * @className CharDictionary
  * @author Cikian
- * @date 2025/4/8 11:03
- * @Version 1.0
- * @description 字典
+ * @version 1.0
  * <p>
  * 字符字典工具类 - 提供预定义字符集和动态组合功能
  * <p>使用示例：
@@ -28,6 +23,7 @@ import java.util.stream.IntStream;
  * // 生成8位随机字符串（大写字母+数字）
  * String random = CharDictionary.random(8, chars);
  * }</pre>
+ * @since 2025/4/8 11:03
  */
 public class CharDictionary {
 

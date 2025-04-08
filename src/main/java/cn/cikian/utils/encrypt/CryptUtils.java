@@ -11,11 +11,11 @@ import java.security.SecureRandom;
 import java.util.Base64;
 
 /**
- * @className CryptUtils
+ * Crypt加密工具
+ *
  * @author Cikian
- * @date 2025/4/8 14:00
+ * @since 2025/4/8 14:00
  * @version 1.0
- * @description Crypt加密工具
  */
 
 public class CryptUtils {

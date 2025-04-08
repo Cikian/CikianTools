@@ -10,11 +10,11 @@ import java.util.stream.Collectors;
 import static cn.cikian.dictionary.CharSet.combine;
 
 /**
- * @className StringUtils
+ * 字符串工具类
+ *
  * @author Cikian
- * @date 2025/4/8 10:50
- * @Version 1.0
- * @description 字符串工具类
+ * @version 1.0
+ * @since 2025/4/8 10:50
  */
 
 public class StringUtils {

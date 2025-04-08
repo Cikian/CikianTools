@@ -6,11 +6,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * @className MD5Utils
+ * MD5工具类
+ *
  * @author Cikian
- * @date 2025/4/8 13:36
- * @Version 1.0
- * @description MD5工具类
+ * @since 2025/4/8 13:36
+ * @version 1.0
  */
 
 public class MD5Utils {
