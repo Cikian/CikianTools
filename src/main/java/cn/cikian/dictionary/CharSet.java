@@ -1,8 +1,10 @@
 package cn.cikian.dictionary;
 
 
-import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -25,29 +27,41 @@ import java.util.stream.Collectors;
  * }</pre>
  */
 public enum CharSet {
-    /** 大写字母 A-Z */
+    /**
+     * 大写字母 A-Z
+     */
     UPPERCASE(range('A', 'Z')),
 
-    /** 小写字母 a-z */
+    /**
+     * 小写字母 a-z
+     */
     LOWERCASE(range('a', 'z')),
 
-    /** 数字 0-9 */
+    /**
+     * 数字 0-9
+     */
     DIGITS(range('0', '9')),
 
-    /** 基础符号集 */
+    /**
+     * 基础符号集
+     */
     SYMBOLS("!@#$%^&*()-_=+[]{}|;:,.<>/?".toCharArray()),
 
-    /** 密码常用符号集 */
+    /**
+     * 密码常用符号集
+     */
     COMMON_SYMBOLS("_-!@".toCharArray()),
 
-    /** 十六进制小写 */
-    HEX_LOWER(range('0','9','a','f')),
+    /**
+     * 十六进制小写
+     */
+    HEX_LOWER(range('0', '9', 'a', 'f')),
 
-    /** 十六进制大写 */
-    HEX_UPPER(range('0','9','A','F'));
+    /**
+     * 十六进制大写
+     */
+    HEX_UPPER(range('0', '9', 'A', 'F'));
 
-    // 排除易混淆字符
-    private static final String AMBIGUOUS = "0OIl1";
     private final char[] characters;
 
     CharSet(char[] chars) {
@@ -63,6 +77,7 @@ public enum CharSet {
 
     /**
      * 组合多个字符集
+     *
      * @param sets 需要组合的字符集枚举
      */
     public static Set<Character> combine(CharSet... sets) {
@@ -80,20 +95,14 @@ public enum CharSet {
         Set<Character> chars = new LinkedHashSet<>();
         for (int i = 0; i < ranges.length; i += 2) {
             int start = ranges[i];
-            int end = ranges[i+1];
+            int end = ranges[i + 1];
             for (int c = start; c <= end; c++) {
-                chars.add((char)c);
+                chars.add((char) c);
             }
         }
         return chars.stream()
-                .map(c -> c.toString())
+                .map(Object::toString)
                 .collect(Collectors.joining())
-                .toCharArray();
-    }
-
-    // 过滤易混淆字符
-    private static char[] filterCharacters(char[] original) {
-        return new String(original).replaceAll("[" + AMBIGUOUS + "]", "")
                 .toCharArray();
     }
 

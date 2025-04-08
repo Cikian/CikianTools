@@ -10,20 +10,20 @@ import java.util.stream.Collectors;
 import static cn.cikian.dictionary.CharSet.combine;
 
 /**
- * @className: StringUtils
- * @author: Cikian
- * @date: 2025/4/8 10:50
- * @Version: 1.0
- * @description: 字符串工具类
+ * @className StringUtils
+ * @author Cikian
+ * @date 2025/4/8 10:50
+ * @Version 1.0
+ * @description 字符串工具类
  */
 
 public class StringUtils {
 
     /**
-     * 生成随机字符串
+     * 生成随机字符串，大小写字母、数字、符号
      *
-     * @param length 生成长度<br>
-     *               {@code @Description:} 生成随机字符串，大小写字母、数字、符号
+     * @param length 生成长度
+     * @return 随机字符串
      */
     public static String getRandomStr(int length) {
         Set<Character> allChars = combine(
@@ -45,6 +45,7 @@ public class StringUtils {
      *
      * @param length      生成长度
      * @param excludedStr 排除的字符
+     * @return 随机字符串
      */
     public static String getRandomStr(int length, String excludedStr) {
         Set<Character> allChars = new java.util.HashSet<>(combine(
@@ -68,6 +69,7 @@ public class StringUtils {
      *
      * @param length  生成长度
      * @param baseStr 候选字符集
+     * @return 随机字符串
      */
     public static String getRandomStrWithCustomStr(int length, String baseStr) {
         Character[] charArray = baseStr.chars().mapToObj(c -> (char) c).distinct().toArray(Character[]::new);
@@ -81,6 +83,7 @@ public class StringUtils {
      * 将大写字母转为小写
      *
      * @param str 字符串
+     * @return 小写字符串
      */
     public static String toLowerCase(String str) {
         return str.toLowerCase();
@@ -90,6 +93,7 @@ public class StringUtils {
      * 将小写字母转为大写
      *
      * @param str 字符串
+     * @return 大写字符串
      */
     public static String toUpperCase(String str) {
         return str.toUpperCase();
@@ -142,7 +146,7 @@ public class StringUtils {
      * @return 去除特殊字符后的字符串
      */
     public static String removeSpecialChar(String str) {
-        return str.replaceAll("[^a-zA-Z0-9\\s]", "");
+        return str.replaceAll("[^a-zA-Z0-9]", "");
     }
 
     /**

@@ -6,15 +6,21 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * @className: MD5Utils
- * @author: Cikian
- * @date: 2025/4/8 13:36
- * @Version: 1.0
- * @description: MD5工具类
+ * @className MD5Utils
+ * @author Cikian
+ * @date 2025/4/8 13:36
+ * @Version 1.0
+ * @description MD5工具类
  */
 
 public class MD5Utils {
 
+    /**
+     * 使用MD5算法对字符串进行加密
+     *
+     * @param input 要加密的字符串
+     * @return 32位MD5
+     */
     public static String md5(String input) {
         try {
             // 1. 创建MD5加密器

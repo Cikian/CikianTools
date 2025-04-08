@@ -6,18 +6,17 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-/**
- * @className: CharDictionary
- * @author: Cikian
- * @date: 2025/4/8 11:03
- * @Version: 1.0
- * @description: 字典
- */
+
 
 
 /**
+ * @className CharDictionary
+ * @author Cikian
+ * @date 2025/4/8 11:03
+ * @Version 1.0
+ * @description 字典
+ * <p>
  * 字符字典工具类 - 提供预定义字符集和动态组合功能
- *
  * <p>使用示例：
  * <pre>{@code
  * // 获取大写字母+数字的组合字符集
