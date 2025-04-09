@@ -34,6 +34,10 @@ public class CryptUtils {
      * @return Base64编码的存储哈希
      */
     public static String SCrypt(String password) {
+        if (password == null || password.isEmpty()) {
+            throw new IllegalArgumentException("密码不能为空");
+        }
+        
         // 生成随机盐
         byte[] salt = new byte[SALT_LENGTH];
         new SecureRandom().nextBytes(salt);
@@ -60,8 +64,17 @@ public class CryptUtils {
      * @return boolean 验证结果
      */
     public static boolean verify(String password, String storedHash) {
+        if (password == null || password.isEmpty() || storedHash == null || storedHash.isEmpty()) {
+            throw new IllegalArgumentException("密码和存储哈希不能为空");
+        }
+        
         // 解码Base64获取完整数据
-        byte[] combined = Base64.getDecoder().decode(storedHash);
+        byte[] combined;
+        try {
+            combined = Base64.getDecoder().decode(storedHash);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("无效的Base64编码存储哈希", e);
+        }
 
         // 正确分离盐和哈希
         byte[] salt = extractSalt(combined);
@@ -83,6 +96,10 @@ public class CryptUtils {
      * @return 数组：[0]=Base64编码的存储哈希，[1]=Base64编码的密钥
      */
     public static String[] SCryptWithKey(String password) {
+        if (password == null || password.isEmpty()) {
+            throw new IllegalArgumentException("密码不能为空");
+        }
+        
         try {
             // 生成随机盐
             byte[] salt = new byte[SALT_LENGTH];
@@ -127,10 +144,20 @@ public class CryptUtils {
      * @return boolean 是否验证成功
      */
     public static boolean verifyWithKey(String password, String storedHash, String key) {
+        if (password == null || password.isEmpty() || storedHash == null || storedHash.isEmpty() || key == null || key.isEmpty()) {
+            throw new IllegalArgumentException("密码、存储哈希和密钥不能为空");
+        }
+        
         try {
             // 解码输入数据
-            byte[] combined = Base64.getDecoder().decode(storedHash);
-            byte[] keyBytes = Base64.getDecoder().decode(key);
+            byte[] combined;
+            byte[] keyBytes;
+            try {
+                combined = Base64.getDecoder().decode(storedHash);
+                keyBytes = Base64.getDecoder().decode(key);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("无效的Base64编码数据", e);
+            }
 
             // 提取盐和原始哈希
             byte[] salt = new byte[SALT_LENGTH];

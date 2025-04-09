@@ -226,5 +226,13 @@ public class StringUtils {
         return sb.toString();
     }
 
-
+    /**
+     * 判断字符串是否只包含数字
+     *
+     * @param str 字符串
+     * @return 是否只包含数字
+     */
+    public static boolean isNumeric(String str) {
+        return str != null && str.matches("\\d+");
+    }
 }

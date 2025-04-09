@@ -1,6 +1,9 @@
 package cn.cikian.utils.file;
 
 
+import cn.cikian.code.ErrorCode;
+import cn.cikian.exception.CikException;
+
 import java.io.*;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -27,7 +30,7 @@ public class FileUtils {
         Path path = Paths.get(absolutePath);
         // 检查路径是否为文件夹
         if (path.getFileName() == null || Files.isDirectory(path)) {
-            throw new IllegalArgumentException("路径必须包含有效文件名");
+            throw new CikException(ErrorCode.FAIL.code(), "路径必须包含有效文件名");
         }
         Files.createDirectories(path.getParent());
 
@@ -41,9 +44,9 @@ public class FileUtils {
             int bytesRead;
             while ((bytesRead = bis.read(buffer)) != -1) {
                 bos.write(buffer, 0, bytesRead);
-                System.out.print("\r\u001B[32mWrite Success!\u001B[0m");
+                System.out.printf("\r\u001B[32mWriting... %.1f%%\u001B[0m", (bis.available() / (double)inputStream.available()) * 100);
             }
-            System.out.println();
+            System.out.println("\n\u001B[32mWrite completed successfully!\u001B[0m");
         }
     }
 
@@ -65,25 +68,7 @@ public class FileUtils {
     public static InputStream compressToZipStream(String absolutePath) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
-            Path sourcePath = Paths.get(absolutePath);
-
-            Files.walk(sourcePath)
-                    .forEach(path -> {
-                        try {
-                            String entryName = sourcePath.relativize(path).toString().replace('\\', '/');
-                            if (entryName.isEmpty()) return;
-
-                            zos.putNextEntry(new ZipEntry(entryName + (Files.isDirectory(path) ? "/" : "")));
-                            if (!Files.isDirectory(path)) {
-                                Files.copy(path, zos);
-                                System.out.print("\r\u001B[32mCompress Success!\u001B[0m");
-                            }
-                            zos.closeEntry();
-                        } catch (IOException e) {
-                            throw new UncheckedIOException(e);
-                        }
-                    });
-            System.out.println();
+            compress(absolutePath, zos);
         } catch (UncheckedIOException e) {
             throw e.getCause();
         }
@@ -101,26 +86,7 @@ public class FileUtils {
         Path tempFile = Files.createTempFile("CikToolsCompressed-", ".zip");
         try (FileOutputStream fos = new FileOutputStream(tempFile.toFile());
              ZipOutputStream zos = new ZipOutputStream(fos)) {
-
-            Path sourcePath = Paths.get(absolutePath);
-
-            Files.walk(sourcePath)
-                    .forEach(path -> {
-                        try {
-                            String entryName = sourcePath.relativize(path).toString().replace('\\', '/');
-                            if (entryName.isEmpty()) return;
-
-                            zos.putNextEntry(new ZipEntry(entryName + (Files.isDirectory(path) ? "/" : "")));
-                            if (!Files.isDirectory(path)) {
-                                Files.copy(path, zos);
-                                System.out.print("\r\u001B[32mCompress Success!\u001B[0m");
-                            }
-                            zos.closeEntry();
-                        } catch (IOException e) {
-                            throw new UncheckedIOException(e);
-                        }
-                    });
-            System.out.println();
+            compress(absolutePath, zos);
             return tempFile.toAbsolutePath().toString();
         } catch (Exception e) {
             Files.deleteIfExists(tempFile);
@@ -193,5 +159,27 @@ public class FileUtils {
             }
             throw e;
         }
+    }
+
+    private static void compress(String absolutePath, ZipOutputStream zos) throws IOException {
+        Path sourcePath = Paths.get(absolutePath);
+
+        Files.walk(sourcePath)
+                .forEach(path -> {
+                    try {
+                        String entryName = sourcePath.relativize(path).toString().replace('\\', '/');
+                        if (entryName.isEmpty()) return;
+
+                        zos.putNextEntry(new ZipEntry(entryName + (Files.isDirectory(path) ? "/" : "")));
+                        if (!Files.isDirectory(path)) {
+                            Files.copy(path, zos);
+                            System.out.printf("\r\u001B[32mCompressing... %s\u001B[0m", entryName);
+                        }
+                        zos.closeEntry();
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
+        System.out.println("\n\u001B[32mCompression completed successfully!\u001B[0m");
     }
 }
