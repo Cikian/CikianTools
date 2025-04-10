@@ -202,6 +202,59 @@ public class DateUtils {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 获取当前时间,字符串
+     *
+     * @return 当前时间默认格式字符串
+     */
+    public static String nowStr() {
+        return format(LocalDateTime.now());
+    }
+
+    /**
+     * 获取当前时间,指定时区,字符串
+     *
+     * @return 指定时区当前时间默认格式字符串
+     */
+    public static String nowStr(ZoneId zoneId) {
+        return format(LocalDateTime.now(zoneId));
+    }
+
+    /**
+     * 获取当前时间,指定格式,字符串
+     *
+     * @return 当前时间指定格式字符串
+     */
+    public static String nowStr(String pattern) {
+        return format(LocalDateTime.now(), pattern);
+    }
+
+    /**
+     * 获取当前时间,指定时区,指定格式,字符串
+     *
+     * @return 指定时区当前时间指定格式字符串
+     */
+    public static String nowStr(String pattern, ZoneId zoneId) {
+        return format(LocalDateTime.now(zoneId), pattern);
+    }
+
+    /**
+     * 获取当前时间
+     *
+     * @return 日期列表
+     */
+    public static LocalDateTime now() {
+        return LocalDateTime.now();
+    }
+
+    /**
+     * 获取当前时间,指定时区
+     *
+     * @return 日期列表
+     */
+    public static LocalDateTime now(ZoneId zoneId) {
+        return LocalDateTime.now(zoneId);
+    }
 
     private static void validatePattern(String pattern) {
         try {
