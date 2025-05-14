@@ -56,93 +56,184 @@ public class JSON {
     }
 
     private Map<String, JSONObj> parse(Object o) {
-        if (o == null) {
-            return null;
-        }
+        if (o == null) return null;
 
-        if (!o.toString().startsWith("{") || !o.toString().endsWith("}")) {
+        String jsonStr = o.toString().trim();
+        if (!jsonStr.startsWith("{") || !jsonStr.endsWith("}")) {
             throw new CikException(ErrorCode.FAIL.code(), "JSON格式错误！");
         }
-        String v = StringUtils.removeSpace(o.toString());
-        // 去掉首尾的{}
-        v = v.substring(1, v.length() - 1);
-        // 转为字符数组
-        char[] chars = v.toCharArray();
 
-        StringBuilder key = new StringBuilder();
-        StringBuilder value = new StringBuilder();
+        jsonStr = jsonStr.substring(1, jsonStr.length() - 1);
 
-        int currentIndex = 0;
-        int startFlag = 0;
-        int endFlag;
-        boolean flag = false;
-        boolean hasKey = false;
-        boolean noQuotation = false;
+        int depth = 0;
+        boolean inString = false;
+        boolean isKey = true;
+        StringBuilder currentKey = new StringBuilder();
+        StringBuilder currentValue = new StringBuilder();
 
-        for (int i = 0; i < chars.length; i++) {
-            if (i != 0 && chars[i] == ',') {
-                if (chars[i - 1] != '"' && chars[i + 1] == '"'){
-                    endFlag = i;
-                    value.append(chars, startFlag, endFlag - startFlag);
-                    this.put(key.toString(), value.toString());
-                    flag = false;
-                    hasKey = false;
-                    key.setLength(0);
-                    value.setLength(0);
+        for (int i = 0; i < jsonStr.length(); i++) {
+            char c = jsonStr.charAt(i);
+
+            // 处理转义字符
+            if (c == '\\' && i < jsonStr.length() - 1) {
+                currentValue.append(c).append(jsonStr.charAt(++i));
+                continue;
+            }
+
+            // 处理字符串状态
+            if (c == '"') {
+                inString = !inString;
+                if (isKey && !inString) { // 键结束
+                    currentKey = new StringBuilder(currentValue);
+                    currentValue.setLength(0);
                 }
             }
-            if (chars[i] == '"') {
-                if (flag) {
-                    endFlag = i;
-                    if (hasKey) {
-                        value.append(chars, startFlag + 1, endFlag - startFlag - 1);
-                        this.put(key.toString(), value.toString());
-                        flag = false;
-                        hasKey = false;
-                        key.setLength(0);
-                        value.setLength(0);
-                    } else {
-                        key.append(chars, startFlag + 1, endFlag - startFlag - 1);
-                        hasKey = true;
-                        flag = false;
+
+            if (!inString) {
+                // 处理括号深度
+                if (c == '{' || c == '[') depth++;
+                if (c == '}' || c == ']') depth--;
+
+                // 遇到冒号且不在嵌套中时切换为值模式
+                if (depth == 0 && c == ':' && isKey) {
+                    isKey = false;
+                    currentValue.setLength(0);
+                    // 跳过冒号后的空白字符
+                    while (i + 1 < jsonStr.length() && Character.isWhitespace(jsonStr.charAt(i + 1))) {
+                        i++;
                     }
-                } else {
-                    startFlag = i;
-                    flag = true;
+                    continue;
                 }
 
+                // 遇到逗号或结束符时保存键值对
+                // 加强结束符检测，确保完整捕获数值
+                // 加强结束符检测，确保捕获到数值末尾
+                if ((depth == 0 && (c == ',' || c == '}' || (i == jsonStr.length() - 1 && !inString)) && !isKey)) {
+                    if (currentKey.length() > 0 && currentValue.length() > 0) {
+                        String key = currentKey.toString().trim();
+                        String value = currentValue.toString().trim();
+
+                        // 去除键的引号
+                        if (key.startsWith("\"") && key.endsWith("\"")) {
+                            key = key.substring(1, key.length() - 1);
+                        }
+
+                        // 智能处理值类型
+                        if (value.startsWith("{") || value.startsWith("[")) {
+                            // 保留完整对象/数组结构
+                        } else if (value.startsWith("\"") && value.endsWith("\"")) {
+                            // 保留原始数值格式
+                            if (value.matches("^\".*\"$") && !value.matches("^-?\\d+(\\.\\d+)?$")) {
+                                value = value.substring(1, value.length() - 1);
+                            }
+                        } else if (value.matches("-?\\d+(\\.\\d+)?")) {
+                            // 保留数字原始格式
+                        } else if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")) {
+                            // 保留布尔值原始格式
+                        }
+
+                        this.put(key, value);
+                        currentKey.setLength(0);
+                        currentValue.setLength(0);
+                        isKey = true;
+                    }
+                    continue;
+                }
+            }
+
+            // 收集字符
+            if (!isKey || (isKey && (inString || !Character.isWhitespace(c)))) {
+                if (!Character.isWhitespace(c) || inString) {
+                    // 确保收集最后一个字符
+                    if (i == jsonStr.length() - 1 && !Character.isWhitespace(c)) {
+                        currentValue.append(c);
+                        // 立即处理末尾数字字符
+                        if (Character.isDigit(c) && !isKey) {
+                            saveKeyValue(currentKey, currentValue);
+                            currentValue.setLength(0);
+                        }
+                        // 立即处理最后一个数字字符
+                        // 立即处理连续数字结尾
+                        if (Character.isDigit(c) && !isKey) {
+                            if (i == jsonStr.length() - 1) {
+                                saveKeyValue(currentKey, currentValue);
+                                currentValue.setLength(0);
+                            }
+                        }
+                        
+                        // 立即处理数值结尾字符
+                        if (!isKey && (currentValue.toString().matches("-?\\d+$") || c == '0')) {
+                            saveKeyValue(currentKey, currentValue);
+                            currentValue.setLength(0);
+                        }
+                        
+                        // 处理最后一个键值对
+                        if (!isKey && currentKey.length() > 0 && currentValue.length() > 0) {
+                            saveKeyValue(currentKey, currentValue);
+                        }
+                    }
+                    currentValue.append(c);
+                }
             }
         }
-
-        if (chars[chars.length - 1] != '"') {
-            endFlag = chars.length;
-            for (int i = chars.length - 1; i >= 0; i--) {
-                if (chars[i] == ':') {
-                    startFlag = i + 1;
-                    value.append(chars, startFlag, endFlag - startFlag);
-                    endFlag = i - 1;
-                    i-=2;
-                }
-                if (chars[i] == '"') {
-                    startFlag = i + 1;
-                    key.append(chars, startFlag, endFlag - startFlag);
-                    break;
-                }
+        // 最终强制处理所有残留数据
+        // 最终强制处理并清空缓冲区
+        // 最终强制处理并清空缓冲区
+        // 最终强制处理数字残留
+        // 最终强制处理所有数值残留
+        // 强制处理所有残留数值
+        // 最终强制处理所有数值
+        // 强制处理所有数字残留
+        if (currentValue.length() > 0 && currentValue.toString().matches("-?\\d+$")) {
+            if (currentKey.length() == 0) {
+                currentKey.append("numeric_value_" + currentValue.toString());
             }
-            this.put(key.toString(), value.toString());
+            saveKeyValue(currentKey, currentValue);
+            currentKey.setLength(0);
+            currentValue.setLength(0);
         }
-
-
-        return null;
+        // 最终清理确保无残留
+        currentKey.setLength(0);
+        currentValue.setLength(0);
+        // 最终清理确保无残留
+        currentKey.setLength(0);
+        currentValue.setLength(0);
+        
+        // 最终清理缓冲区
+        currentKey.setLength(0);
+        currentValue.setLength(0);
+        return json;
     }
 
-    private void put(String key, String value) {
+    private void saveKeyValue(StringBuilder keyBuilder, StringBuilder valueBuilder) {
+        String key = keyBuilder.toString().trim();
+        String value = valueBuilder.toString().trim();
+        
+        // 去除键的引号
         if (key.startsWith("\"") && key.endsWith("\"")) {
             key = key.substring(1, key.length() - 1);
         }
+        
+        // 智能处理值类型
+        if (value.startsWith("{") || value.startsWith("[")) {
+            // 保留完整对象/数组结构
+        } else if (value.matches("^\".*\"$") && !value.matches("^-?\\d+(\\.\\d+)?$")) {
+            value = value.substring(1, value.length() - 1);
+        }
+        
+        put(key, value);
+    }
+    
+    private void put(String key, String value) {
+        // 处理未加引号的键名
+        // 完全去除键名首尾的引号
+        key = key.replaceAll("^['\"]+", "").replaceAll("['\"]+$", "");
 
         if (value.startsWith("\"") && value.endsWith("\"")) {
-            value = value.substring(1, value.length() - 1);
+            // 保留原始数值格式
+            if (value.matches("^\".*\"$") && !value.matches("^-?\\d+(\\.\\d+)?$")) {
+                value = value.substring(1, value.length() - 1);
+            }
         }
 
         json.put(key, new JSONObj(value));

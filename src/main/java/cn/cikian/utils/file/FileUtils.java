@@ -26,16 +26,23 @@ public class FileUtils {
      * @param absolutePath 绝对路径
      * @throws IOException IO异常
      */
-    public static void writeStreamToFile(InputStream inputStream, String absolutePath) throws IOException {
+    public static void writeStreamToFile(InputStream inputStream, String absolutePath) throws FileAlreadyExistsException {
+        try {
+            inputStream.mark(0);
+            inputStream.reset();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         Path path = Paths.get(absolutePath);
         // 检查路径是否为文件夹
         if (path.getFileName() == null || Files.isDirectory(path)) {
             throw new CikException(ErrorCode.FAIL.code(), "路径必须包含有效文件名");
         }
-        Files.createDirectories(path.getParent());
-
-        if (Files.exists(path)) {
-            throw new FileAlreadyExistsException("文件已存在: " + path);
+        try {
+            Files.createDirectories(path.getParent());
+        } catch (IOException e) {
+            throw new CikException(ErrorCode.FAIL.code(), "创建目录失败: " + path.getParent(), e);
         }
 
         try (BufferedOutputStream bos = new BufferedOutputStream(Files.newOutputStream(path));
@@ -47,6 +54,8 @@ public class FileUtils {
                 System.out.printf("\r\u001B[32mWriting... %.1f%%\u001B[0m", (bis.available() / (double)inputStream.available()) * 100);
             }
             System.out.println("\n\u001B[32mWrite completed successfully!\u001B[0m");
+        } catch (IOException e) {
+            throw new CikException(ErrorCode.FAIL.code(), "I/O异常", e);
         }
     }
 
@@ -158,6 +167,45 @@ public class FileUtils {
                 throw ((UncheckedIOException) e).getCause();
             }
             throw e;
+        }
+    }
+
+    /**
+     * 删除指定路径的文件或目录（包括非空目录）
+     * @param path 要删除的文件/目录路径
+     * @throws IllegalArgumentException 如果路径不存在
+     */
+    public static void deleteFileOrDir(String path) {
+        File target = new File(path);
+
+        if (!target.exists()) {
+            throw new IllegalArgumentException("路径不存在: " + path);
+        }
+
+        if (target.isFile()) {
+            if (!target.delete()) {
+                throw new RuntimeException("文件删除失败: " + path);
+            }
+        } else {
+            deleteDirectory(target);
+        }
+    }
+
+    private static void deleteDirectory(File directory) {
+        File[] files = directory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    deleteDirectory(file); // 递归删除子目录
+                } else {
+                    if (!file.delete()) {
+                        throw new RuntimeException("文件删除失败: " + file.getAbsolutePath());
+                    }
+                }
+            }
+        }
+        if (!directory.delete()) {
+            throw new RuntimeException("目录删除失败: " + directory.getAbsolutePath());
         }
     }
 
